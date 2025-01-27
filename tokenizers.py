@@ -88,7 +88,30 @@ class NgramTokenizer(Tokenizer):
         Input: "This movie was really bad, but bad in a fun way, so I loved it."
         Output: [16999, 51610, 39000, 44191, 89954, 14539, 50931]
         """
-        raise Exception("TODO: Implement this method")
+        
+        presentTokens = []
+        ids = []
+
+        textWords = convert_text_to_words(text)
+
+        tokens = list(self.token_to_id.keys())
+
+        for i in range(0, len(textWords)):
+
+            currentToken = tuple(textWords[i:i+self.n])
+
+            if currentToken in tokens:
+
+                presentTokens.append(currentToken)
+                ids.append(self.token_to_id.get(currentToken))
+                
+    
+        if return_token_ids:
+            return ids
+        else:
+            return presentTokens
+
+
 
     def train(self, corpus: List[str]):
         """
@@ -109,13 +132,65 @@ class NgramTokenizer(Tokenizer):
         set self.token_to_id: {"This": 0, "movie": 1, "was": 2, "good": 3, "bad": 4}
         set self.id_to_token: {0: "This", 1: "movie", 2: "was", 3: "good", 4: "bad"}
         """
-        raise Exception("TODO: Implement this method")
+        
+        tokenToID = {}
+        IDToToken = {}
+        tokenFreqDict = {}
+
+        for text in corpus:
+
+            textWords = convert_text_to_words(text)
+
+            for i in range (0, len(textWords)-self.n):
+
+                currentNGram = tuple(textWords[i:i+self.n])
+
+                #adding ngram to list if not present
+                if currentNGram not in tokenToID:
+
+                    tokenToID.update({currentNGram: len(tokenToID)})
+                    IDToToken.update({len(IDToToken): currentNGram})
+                    tokenFreqDict.update({currentNGram: 1})
+
+                else:
+
+                    tokenFreqDict[currentNGram] += 1
+
+
+
+        #truncating vocabulary if over size
+        if self.vocab_size != -1 and len(tokenFreqDict) > self.vocab_size:
+
+            #sort ascending by item value
+            tokenFreqDict = dict(sorted(tokenFreqDict.items(), key = lambda item : item[1]).reverse)
+
+            while len(tokenFreqDict) > self.vocab_size:
+
+                #remove items from frequency and id mapping dictionaries
+                removed = tokenFreqDict.popitem()
+                del tokenToID[removed[0]]
+
+            ngrams = list(tokenToID.keys())
+            IDToToken.clear()
+
+            for i in range(0, len(ngrams)):
+
+                #reset ids 
+                tokenToID[ngrams[i]] = i
+                IDToToken.update({i: ngrams[i]})
+    
+        self.token_to_id = tokenToID
+        self.id_to_token = IDToToken
+
+            
+
+                    
 
     def __len__(self):
         """
         TODO: Return the number of tokens in the vocabulary.
         """
-        raise Exception("TODO: Implement this method")
+        return len(self.token_to_id)
 
 if __name__ == "__main__":
     with jsonlines.open("data/imdb_train.txt", "r") as reader:
