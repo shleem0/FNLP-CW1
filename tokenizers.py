@@ -94,16 +94,16 @@ class NgramTokenizer(Tokenizer):
 
         textWords = convert_text_to_words(text)
 
-        tokens = list(self.token_to_id.keys())
-
         for i in range(0, len(textWords)):
 
             currentToken = tuple(textWords[i:i+self.n])
 
-            if currentToken in tokens:
+            if currentToken in self.token_to_id:
 
                 presentTokens.append(currentToken)
-                ids.append(self.token_to_id.get(currentToken))
+
+                if return_token_ids:
+                    ids.append(self.token_to_id.get(currentToken))
                 
     
         if return_token_ids:
