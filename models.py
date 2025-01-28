@@ -185,7 +185,13 @@ class LogisticRegressionClassifier(SentimentClassifier):
         sigmoid_score = sigmoid(5) = 0.993...
         Output: 1
         """
-        raise Exception("TODO: Implement this method")
+        
+        featureCounter = self.featurizer.extract_features(text)
+        score = self.bias
+        
+        return round(sigmoid(score + np.dot(self.weights, featureCounter)))
+
+        
 
     def set_weights(self, weights: np.ndarray):
         """
@@ -225,7 +231,12 @@ class LogisticRegressionClassifier(SentimentClassifier):
         set `self.weights`: [-1.5, 1.25, 1.75]
         set `self.bias`: -0.25
         """
-        raise Exception("TODO: Implement this method")
+        features = []
+        predictions = []
+
+        for examples in batch_exs:
+            features.append(self.featurizer.extract_features(examples.words))
+            predictions.append(self.predict(self, examples.words))
 
 
 def get_accuracy(predictions: List[int], labels: List[int]) -> float:
