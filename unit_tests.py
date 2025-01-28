@@ -140,6 +140,7 @@ class CountFeatureExtractorTest(unittest.TestCase):
                 15: 1,
             }
         )
+
         true_count_values = Counter(true_counts.values())
         predicted_count_values = Counter(features.values())
 

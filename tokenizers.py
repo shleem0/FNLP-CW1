@@ -100,10 +100,11 @@ class NgramTokenizer(Tokenizer):
 
             if currentToken in self.token_to_id:
 
-                presentTokens.append(currentToken)
-
                 if return_token_ids:
                     ids.append(self.token_to_id.get(currentToken))
+                
+                else:
+                    presentTokens.append(currentToken)
                 
     
         if return_token_ids:
@@ -141,8 +142,8 @@ class NgramTokenizer(Tokenizer):
 
             textWords = convert_text_to_words(text)
 
-            for i in range (0, len(textWords)-self.n):
-
+            for i in range (0, (len(textWords) - self.n + 1)):
+ 
                 currentNGram = tuple(textWords[i:i+self.n])
 
                 #adding ngram to list if not present
