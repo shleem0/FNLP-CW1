@@ -233,10 +233,33 @@ class LogisticRegressionClassifier(SentimentClassifier):
         """
         features = []
         predictions = []
+        new_weights = []
+
+        """
+        Severley work in progress!
+        """
+
 
         for examples in batch_exs:
             features.append(self.featurizer.extract_features(examples.words))
             predictions.append(self.predict(self, examples.words))
+
+        z = sum(np.dot(self.weights, features)) + self.bias
+        y_hat = 1 / (1 + np.e ** (-z))
+        y = 0
+        
+        loss_from_bias = y_hat - y
+
+        for i in range(len(self.weights)):
+            loss_from_weight = (y_hat - batch_exs[i].label) * features[i]
+            new_weights = self.weights[i] - learning_rate * loss_from_weight
+
+
+        new_bias = self.bias - (learning_rate/loss_from_bias)
+
+
+        self.set_weights(new_weights)
+        self.set_bias(new_bias)
 
 
 def get_accuracy(predictions: List[int], labels: List[int]) -> float:
