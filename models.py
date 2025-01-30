@@ -148,6 +148,7 @@ def sigmoid(x: float) -> float:
 
 
 class LogisticRegressionClassifier(SentimentClassifier):
+
     """
     Logistic regression classifier, uses a featurizer to transform text into feature vectors and learns a binary classifier.
     """
@@ -188,10 +189,12 @@ class LogisticRegressionClassifier(SentimentClassifier):
         
         featureCounter = self.featurizer.extract_features(text)
         score = self.bias
-        
-        return round(sigmoid(score + np.dot(self.weights, featureCounter)))
 
+
+        for feature, count in featureCounter.items():
+            score += self.weights[count]*featureCounter[feature]
         
+        return 1 if sigmoid(score) >= 0.5 else 0
 
     def set_weights(self, weights: np.ndarray):
         """
@@ -243,6 +246,10 @@ class LogisticRegressionClassifier(SentimentClassifier):
         for examples in batch_exs:
             features.append(self.featurizer.extract_features(examples.words))
             predictions.append(self.predict(self, examples.words))
+
+
+        print("features: ", features)
+        print("predictions: ", predictions)
 
         z = sum(np.dot(self.weights, features)) + self.bias
         y_hat = 1 / (1 + np.e ** (-z))
@@ -419,3 +426,30 @@ def train_model(
     else:
         raise Exception("Pass in TRIVIAL or LR to run the appropriate system")
     return model
+
+# class TestLogisticRegressionClassifier():
+
+#     def setUp(self):
+#         self.feat_extractor = lambda x: Counter(x.split())
+#         self.model = LogisticRegressionClassifier(featurizer=self.feat_extractor)
+#         self.model.weights = [-2, 1, 2]
+#         self.model.bias = -1
+
+#     def test_training_step(self):
+#         batch_exs = [
+#             SentimentExample(words="hi hi world", label=1),
+#             SentimentExample(words="foo bar", label=0)
+#         ]
+#         learning_rate = 0.5
+#         self.model.training_step(batch_exs, learning_rate)
+#         print(self.model.weights == [-1.5, 1.25, 1.75])
+#         print(self.model.bias == -0.25)
+
+#     def test_predict(self):
+#         example = SentimentExample(words="hi world", label=1)
+#         prediction = self.model.predict(example)
+#         print(prediction)
+
+    
+
+
