@@ -52,8 +52,14 @@ class CountFeatureExtractor(FeatureExtractor):
         (In the above case, the token "foo" is not in the text, so its count is 0.)
         """
 
-        tokenizedText = self.tokenizer.tokenize(text)
+        tokenizedText = self.tokenizer.tokenize(text, return_token_ids=True)
+
         counter = Counter(tokenizedText)
+
+        for id in tokenizedText:
+
+            if id not in counter:
+                counter.update({id, 0})
 
         return counter
 
@@ -190,11 +196,12 @@ class LogisticRegressionClassifier(SentimentClassifier):
         featureCounter = self.featurizer.extract_features(text)
         score = self.bias
 
-
         for feature, count in featureCounter.items():
-            score += self.weights[count]*featureCounter[feature]
-        
+
+            score += self.weights[feature] * count
+
         return 1 if sigmoid(score) >= 0.5 else 0
+    
 
     def set_weights(self, weights: np.ndarray):
         """
@@ -234,39 +241,42 @@ class LogisticRegressionClassifier(SentimentClassifier):
         set `self.weights`: [-1.5, 1.25, 1.75]
         set `self.bias`: -0.25
         """
-        features = []
-        predictions = []
         new_weights = []
 
-        """
-        Severley work in progress!
-        """
+        loss_gradient_w = [0] * len(self.weights)
+        loss_gradient_b = 0
+
+        for ex in batch_exs:
+
+            featureCount = self.featurizer.extract_features(ex.words)
+            counts = list(featureCount.values())
+
+            pred = self.predict(ex.words)
+            loss = pred - ex.label
+
+            while len(counts) < len(loss_gradient_w):
+                counts.append(0)
+
+            for i, count in enumerate(counts):
+                loss_gradient_w[i] += loss * count
+
+            loss_gradient_b += loss
 
 
-        for examples in batch_exs:
-            features.append(self.featurizer.extract_features(examples.words))
-            predictions.append(self.predict(self, examples.words))
+        loss_gradient_w = [x / len(batch_exs) for x in loss_gradient_w]
+        loss_gradient_b = loss_gradient_b / len(batch_exs)
 
+        for i, weight in enumerate(self.weights):
 
-        print("features: ", features)
-        print("predictions: ", predictions)
-
-        z = sum(np.dot(self.weights, features)) + self.bias
-        y_hat = 1 / (1 + np.e ** (-z))
-        y = 0
+            new_weight = weight - learning_rate * loss_gradient_w[i]
+            print(new_weight)
+            new_weights.append(new_weight)
         
-        loss_from_bias = y_hat - y
-
-        for i in range(len(self.weights)):
-            loss_from_weight = (y_hat - batch_exs[i].label) * features[i]
-            new_weights = self.weights[i] - learning_rate * loss_from_weight
-
-
-        new_bias = self.bias - (learning_rate/loss_from_bias)
-
+        new_bias = self.bias - learning_rate * loss_gradient_b
 
         self.set_weights(new_weights)
         self.set_bias(new_bias)
+
 
 
 def get_accuracy(predictions: List[int], labels: List[int]) -> float:
