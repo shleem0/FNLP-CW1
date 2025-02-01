@@ -249,18 +249,25 @@ class LogisticRegressionClassifier(SentimentClassifier):
         for ex in batch_exs:
 
             featureCount = self.featurizer.extract_features(ex.words)
-            counts = list(featureCount.values())
 
             pred = self.predict(ex.words)
-            loss = pred - ex.label
+            error = pred - ex.label
 
-            while len(counts) < len(loss_gradient_w):
-                counts.append(0)
+            i = 0
 
-            for i, count in enumerate(counts):
-                loss_gradient_w[i] += loss * count
+            while len(featureCount) < len(loss_gradient_w):
 
-            loss_gradient_b += loss
+                if i not in featureCount:
+
+                    featureCount.update({i: 0})
+
+                i += 1
+
+            for i, feature in enumerate(featureCount):
+
+                loss_gradient_w[i] += error * featureCount[i]
+
+            loss_gradient_b += error
 
 
         loss_gradient_w = [x / len(batch_exs) for x in loss_gradient_w]
@@ -269,7 +276,6 @@ class LogisticRegressionClassifier(SentimentClassifier):
         for i, weight in enumerate(self.weights):
 
             new_weight = weight - learning_rate * loss_gradient_w[i]
-            print(new_weight)
             new_weights.append(new_weight)
         
         new_bias = self.bias - learning_rate * loss_gradient_b
@@ -322,7 +328,17 @@ def train_logistic_regression(
     # Initialize the model and
     # any other variables you want to keep track of
     ##########################################
-    raise Exception("TODO: Implement this section")
+    
+    lr_classifier = LogisticRegressionClassifier(feat_extractor)
+    lr_classifier.set_bias(0.5)
+
+    weight_len = len(list(feat_extractor.tokenizer.token_to_id.values()))
+    weights = [1.0] * weight_len
+    lr_classifier.set_weights(weights)
+
+    best_accuracy = 0
+    best_weights = []
+    best_bias = 0
 
     ##########################################
     # Learning rate scheduler
@@ -343,12 +359,17 @@ def train_logistic_regression(
         # This step helps prevent overfitting
         ##########################################
         shuffled_train_exs = []
-        raise Exception("TODO: Implement this section")
+
+        for ex in train_exs:
+            shuffled_train_exs.append(ex)
+        
+        np.random.shuffle(shuffled_train_exs)
 
         ##########################################
         # Iterate over batches of training examples
         ##########################################
         for i in range(0, len(shuffled_train_exs), batch_size):
+
             batch_exs = shuffled_train_exs[i : i + batch_size]
 
             ##########################################
@@ -360,7 +381,8 @@ def train_logistic_regression(
             # Update the weights and bias of the model using this batch of examples and the current learning rate
             # (hint: this is running a training step with a batch of examples)
             ##########################################
-            raise Exception("TODO: Implement this section")
+            
+            lr_classifier.training_step(batch_exs, cur_learning_rate)
 
         ##########################################
         # Evaluate on the dev set
@@ -368,7 +390,21 @@ def train_logistic_regression(
         # you may find the run_model_over_dataset 
         # and get_accuracy functions helpful
         ##########################################
-        raise Exception("TODO: Implement this section")
+
+        predictions = []
+        truth = []
+
+        for d in dev_exs:
+
+            predictions.append(lr_classifier.predict(d.words))
+            truth.append(d.label)
+
+        accuracy = get_accuracy(predictions, truth)
+
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_weights = lr_classifier.get_weights()
+            best_bias = lr_classifier.get_bias()
 
         ##########################################
         # Log any metrics you want here, tqdm will
@@ -380,7 +416,9 @@ def train_logistic_regression(
         # at the end of training, your 'best_dev_acc' should be the best accuracy on the dev set
         ##########################################
         metrics = {}
-        raise Exception("TODO: Implement this section")
+        metrics.update({"best_dev_acc": best_accuracy, "cur_dev_acc": accuracy})
+
+        print(metrics)
 
         # if metrics is not empty, update the progress bar
         if len(metrics) > 0:
@@ -390,9 +428,11 @@ def train_logistic_regression(
     # Set the weights and bias of the model to
     # the best model so far by dev accuracy
     ##########################################
-    raise Exception("TODO: Implement this section")
+    
+    lr_classifier.set_weights(best_weights)
+    lr_classifier.set_bias(best_bias)
 
-    return model
+    return lr_classifier
 
 
 def train_model(
