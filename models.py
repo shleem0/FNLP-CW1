@@ -283,6 +283,43 @@ class LogisticRegressionClassifier(SentimentClassifier):
         self.set_weights(new_weights)
         self.set_bias(new_bias)
 
+        # Sam's implementation and test for GitHub
+        
+        # new_weights = []
+        # loss_gradient_w = [0] * len(self.weights)
+        # keys = []
+        # loss_gradient_b = 0
+
+
+        # for ex in batch_exs:
+
+        #     featureCount = (self.featurizer.extract_features(ex.words))
+        #     keys.extend(list(featureCount.keys()))
+
+        #     pred = self.predict(ex.words)
+        #     loss = pred - ex.label 
+
+        #     for i, key in enumerate(keys):
+        #         if key in featureCount:
+        #             loss_gradient_w[key] += loss * featureCount[key]
+
+        #     loss_gradient_b += loss
+
+
+
+        # loss_gradient_w = [x / len(batch_exs) for x in loss_gradient_w]
+        # loss_gradient_b = loss_gradient_b / len(batch_exs)
+
+        # for i, weight in enumerate(self.weights):
+
+        #     new_weight = weight - learning_rate * loss_gradient_w[i]
+        #     new_weights.append(new_weight)
+        
+        # new_bias = self.bias - learning_rate * loss_gradient_b
+
+        # self.set_weights(new_weights)
+        # self.set_bias(new_bias)
+
 
 
 def get_accuracy(predictions: List[int], labels: List[int]) -> float:
