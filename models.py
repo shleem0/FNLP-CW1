@@ -52,9 +52,9 @@ class CountFeatureExtractor(FeatureExtractor):
         (In the above case, the token "foo" is not in the text, so its count is 0.)
         """
 
-        tokenizedText = self.tokenizer.tokenize(text, return_token_ids=True)
+        tokenized_text = self.tokenizer.tokenize(text, return_token_ids=True)
 
-        counter = Counter(tokenizedText)
+        counter = Counter(tokenized_text)
 
         for id in tokenizedText:
 
@@ -81,7 +81,7 @@ class CustomFeatureExtractor(FeatureExtractor):
         a Counter mapping from feature ids to their values.
         """
 
-        tokenizedText = self.tokenizer.tokenize(text, return_token_ids=True)
+        tokenized_text = self.tokenizer.tokenize(text, return_token_ids=True)
 
         return Counter({token_id: 1 for token_id in set(tokenizedText)})
   
@@ -108,7 +108,12 @@ class MeanPoolingWordVectorFeatureExtractor(FeatureExtractor):
         Input `word`: "328hdnsr32ion"
         Output: None
         """
-        raise Exception("TODO: Implement this method")
+
+        if word not in self.word_to_vector_model:
+            return None
+
+        wv = self.word_to_vector_model[word]
+        return wv
 
     def extract_features(self, text: List[str]) -> Counter:
         """
@@ -122,7 +127,22 @@ class MeanPoolingWordVectorFeatureExtractor(FeatureExtractor):
         from token ids to their counts, normally you would not need to do this conversion.
         Remember to ignore words that do not have a word vector.
         """
-        raise Exception("TODO: Implement this method")
+
+        tokenized_text = self.tokenizer.tokenize(text)
+        word_vectors = [self.get_word_vector(word) for word in tokenized_text if self.get_word_vector(word) is not None]
+
+        mp_vector = sum(word_vectors) / len(word_vectors)
+
+        counter_dict = {}
+
+        for i in range(0, len(mp_vector)):
+
+            counter_dict[i] = mp_vector[i]
+
+        counter = Counter(counter_dict)
+        return counter
+
+
 
 
 class SentimentClassifier(object):
@@ -330,7 +350,13 @@ def train_logistic_regression(
     lr_classifier = LogisticRegressionClassifier(feat_extractor)
     lr_classifier.set_bias(0.5)
 
-    weight_len = len(list(feat_extractor.tokenizer.token_to_id.values()))
+    if type(feat_extractor) == MeanPoolingWordVectorFeatureExtractor:
+
+        weight_len = len(feat_extractor.word_to_vector_model)
+
+    else:
+        weight_len = len(list(feat_extractor.tokenizer.token_to_id.values()))
+
     weights = [1.0] * weight_len
     lr_classifier.set_weights(weights)
 
@@ -357,7 +383,6 @@ def train_logistic_regression(
         # This step helps prevent overfitting
         ##########################################
         shuffled_train_exs = []
-
         shuffled_train_exs = train_exs
         
         np.random.shuffle(shuffled_train_exs)
