@@ -367,8 +367,6 @@ def train_logistic_regression(
         ##########################################
         for i in range(0, len(shuffled_train_exs), batch_size):
 
-            print(i, "out of", len(shuffled_train_exs))
-
             batch_exs = shuffled_train_exs[i : i + batch_size]
 
             ##########################################
