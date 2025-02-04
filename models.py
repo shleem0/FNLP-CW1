@@ -56,8 +56,7 @@ class CountFeatureExtractor(FeatureExtractor):
 
         counter = Counter(tokenized_text)
 
-        for id in tokenizedText:
-
+        for id in tokenized_text:
             if id not in counter:
                 counter.update({id, 0})
 
@@ -83,7 +82,7 @@ class CustomFeatureExtractor(FeatureExtractor):
 
         tokenized_text = self.tokenizer.tokenize(text, return_token_ids=True)
 
-        return Counter({token_id: 1 for token_id in set(tokenizedText)})
+        return Counter({token_id: 1 for token_id in set(tokenized_text)})
   
 
 
