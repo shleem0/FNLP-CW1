@@ -112,7 +112,9 @@ class MeanPoolingWordVectorFeatureExtractor(FeatureExtractor):
             return None
 
         wv = self.word_to_vector_model[word]
+
         return wv
+
 
     def extract_features(self, text: List[str]) -> Counter:
         """
@@ -126,11 +128,23 @@ class MeanPoolingWordVectorFeatureExtractor(FeatureExtractor):
         from token ids to their counts, normally you would not need to do this conversion.
         Remember to ignore words that do not have a word vector.
         """
-
         tokenized_text = self.tokenizer.tokenize(text)
-        word_vectors = [self.get_word_vector(word) for word in tokenized_text if self.get_word_vector(word) is not None]
+        word_vectors = []
 
-        mp_vector = sum(word_vectors) / len(word_vectors)
+        for token in tokenized_text:
+
+            word_vector = self.get_word_vector(token)
+
+            if word_vector is not None:
+                word_vectors.append(word_vector)
+
+
+        if len(word_vectors) == 0:
+
+            word_vectors.append(np.zeros(25))
+            
+        word_vector_stack = np.vstack(word_vectors)
+        mp_vector = np.mean(word_vector_stack, axis=0)
 
         counter_dict = {}
 
@@ -351,12 +365,12 @@ def train_logistic_regression(
 
     if type(feat_extractor) == MeanPoolingWordVectorFeatureExtractor:
 
-        weight_len = len(feat_extractor.word_to_vector_model)
+        weight_len = 25
 
     else:
         weight_len = len(list(feat_extractor.tokenizer.token_to_id.values()))
 
-    weights = [1.0] * weight_len
+    weights = np.zeros(weight_len)
     lr_classifier.set_weights(weights)
 
     best_accuracy = 0
